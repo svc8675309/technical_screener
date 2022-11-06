@@ -1,5 +1,5 @@
 import sys, getopt
-from stock_data import StockData
+from stock.data_gather.stock_data import StockData
 from yahoo_fin import stock_info as si
 import os
 import pandas as pd
