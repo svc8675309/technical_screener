@@ -36,7 +36,7 @@
                 "LANG": "en_US.UTF-8",
             },
             "args": [
-                "tests.balance_sheet_test.BalanceSheetTest.test_roe"
+                "tests.financials_test.FinancialsTest.test_pe"
             ]
         }
     ]
