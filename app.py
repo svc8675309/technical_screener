@@ -1,16 +1,10 @@
-from pprint import pprint
-from time import strptime
 from flask import Flask, render_template, request
 import sys
 from datetime import date, datetime
-from yh_utils import YhUtils
-from ta_ai import TaAi
 import pandas as pd
-from yh_balance_sheet import YhBalanceSheet
-from yh_income_statement import YhIncomeStatement
-from yh_cash_flows import YhCashFlows
-from yh_balance_income import YhBalanceIncome
-from yh_summary import YhSummary
+from stock.data_gather.stock_data import StockData
+from stock.util.ta_ai import TaAi
+from stock.data_gather.balance_income import BalanceIncome
 
 app = Flask(__name__)
 # FLASK_APP=app.py FLASK_ENV=development flask run --no-debugger
@@ -33,53 +27,48 @@ def index():
             ignore_update = True
 
         end_date = datetime.strptime(date_var, "%Y-%m-%d")
+        resource_dir: str = "./data/resource"
 
         # ( 1 )
-        # tickers_lookup = YhUtils.csv_to_dict(["./resources/companies.csv"])
-        tickers_lookup = YhUtils.csv_to_dict(
-            [
-                "./resources/nasdaqlisted.csv",
-                "./resources/companies.csv",
-                "./resources/nasdaq.csv",
-            ]
-        )
         tickers = []
         if len(stock_picks) == 0 or stock_picks == "*":
-            # ( 2 )
-            # tickers = YhUtils.csv_to_tuple(["./resources/companies.csv"])
-            tickers = YhUtils.csv_to_tuple(
-                [
-                    "./resources/nasdaqlisted.csv",
-                    "./resources/companies.csv",
-                    "./resources/nasdaq.csv",
-                ]
-            )
+            
+            with open(f"{resource_dir}/nasdaq.csv") as f:
+                tickers = f.read().splitlines()
         else:
             stock_picks = stock_picks.strip()
             for item in stock_picks.split(","):
                 item = item.strip()
-                tickers.append((item, tickers_lookup[item][0]))
+                tickers.append(item)
 
-        # ( 3 )
-        candidates: dict = YhUtils.get_stocks_by_dates(
-            tickers, 5, end_date, ignore_update
+        # ( 2 - create new data frames constrained by date )
+        candidates: dict = StockData.get_stocks_by_dates(
+            tickers, 5, end_date
         )
 
-        candlesticks = YhUtils.csv_to_tuple(["./resources/ta_candlesticks.csv"])
-        candidates = TaAi(verbose=True).scan(
-            candlesticks, candidates, "./analysis/candlesticks_2021-06-24_18675.csv",
+        # Get candlestick data
+        candlesticks = {}            
+        with open(f"{resource_dir}/ta_candlesticks.csv") as f:
+            items = f.read().splitlines()
+            for item in items:
+                candlesticks[item.split(",")[0]] = item.split(",")[1]
+        candlesticks = candlesticks.items()        
+
+        # Scan for technical indicators
+        candidates = TaAi().scan(
+            candlesticks, candidates, f"{resource_dir}/candlesticks_2021-06-24_18675.csv",
         )
 
         if len(tickers) > 10:
             # Financials
             #YhIncomeStatement.apply(candidates)
-            YhBalanceSheet.apply(candidates)
-            candidates["Finance"] = pd.to_numeric(
-                candidates["Correctness"]
+            BalanceIncome.apply(candidates)
+            candidates["finance"] = pd.to_numeric(
+                candidates["correctness"]
             ) + pd.to_numeric(candidates["balance_s"])
-            candidates = candidates.sort_values(["Finance"], ascending=[False])
-            candidates = candidates.loc[candidates["Condition"] == "bullish"].copy()
-            YhSummary.apply(candidates)
+            candidates = candidates.sort_values(["finance"], ascending=[False])
+            candidates = candidates.loc[candidates["condition"] == "bullish"].copy()
+            BalanceIncome.apply(candidates)
             candidates = candidates.loc[candidates["pe"] == 1]
 
         # pd.set_option("display.max_rows", None, "display.max_columns", None)

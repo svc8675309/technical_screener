@@ -10,9 +10,7 @@ from yahoo_fin import stock_info as si
 # open,high,low,close,adjclose,volume,ticker
 class StockData(object):
     @staticmethod
-    def get_data(
-        tickers: List[str], data_dir: str = "./data/ticker", look_back_days: int = 1800
-    ) -> dict:
+    def get_data(tickers: List[str], data_dir: str = "./data/ticker", look_back_days: int = 1800) -> dict:
         if tickers is None:
             return None
 
@@ -48,13 +46,14 @@ class StockData(object):
                         # get the date of the last row
                         latest_in_df = df.iloc[-1][0]
                         # increase the last recorded day by 1 day
-                        latest_date = datetime.strptime(
-                            latest_in_df, "%Y-%m-%d"
-                        ) + timedelta(days=1)
+                        latest_date = datetime.strptime(latest_in_df, "%Y-%m-%d") + timedelta(days=1)
                         if latest_date.date() < end_date:
-                            adjusted = si.get_data(
-                                ticker, start_date=latest_date.date(), end_date=end_date
-                            )
+                            try:
+                                adjusted = si.get_data(ticker, start_date=latest_date.date(), end_date=end_date)
+                            except Exception as ex:
+                                print(f"Yahoo_fin :Error downloading : {ticker} : {str(ex)}")
+                                continue
+
                             if len(adjusted) > 0:
                                 temp: pd.DataFrame = pd.DataFrame(
                                     columns=(
@@ -79,17 +78,13 @@ class StockData(object):
                                         r_list[4],
                                         r_list[5],
                                     ]
-                                temp = temp.drop_duplicates(
-                                    subset=["date"], keep="last"
-                                )
+                                temp = temp.drop_duplicates(subset=["date"], keep="last")
                                 # append to the existing file
                                 with open(f"{data_dir}/{ticker}.csv", "a") as f:
                                     temp.to_csv(f, header=False, index=False)
 
                                 # reload ( this solves the index problem )
-                                df: pd.DataFrame = pd.read_csv(
-                                    f"{data_dir}/{ticker}.csv"
-                                )
+                                df: pd.DataFrame = pd.read_csv(f"{data_dir}/{ticker}.csv")
                                 print(f"Updated {ticker}\n")
                     ret_dict[ticker] = df
         return ret_dict
@@ -105,6 +100,48 @@ class StockData(object):
                 res.append(ele)
             ele.append(ticker)
         return res
+
+    @staticmethod
+    def get_stocks_by_dates(
+        tickers: List[str],
+        look_back: int,
+        end_date: date,
+        data_dir: str = "./data/ticker",
+    ) -> dict:
+        """Looks in the data dir for a ticker and returns a data frame with start and end dates
+        that correspond with end_date + lookback
+
+        Args:
+            tickers (List[str]): _description_
+            look_back (int): _description_
+            end_date (date): _description_
+            data_dir (str, optional): _description_. Defaults to "./data/ticker".
+
+        Returns:
+            dict: _description_
+        """
+
+        # Can't be a weekend day
+        wd = end_date.weekday() - 4
+        if wd > 0:
+            end_date = end_date - timedelta(wd)
+
+        # At least a week
+        start = (int(look_back / 7) + 1) * 7
+
+        start_date = end_date - timedelta(start)
+        start_date_str = start_date.strftime("%Y-%m-%d")
+        end_date_str = end_date.strftime("%Y-%m-%d")
+
+        ret_dict = {}
+        for ticker in tickers:
+            try:
+                df: pd.DataFrame = pd.read_csv(f"{data_dir}/{ticker}.csv")
+                df: df.set_index("Date")[start_date_str:end_date_str].tail(look_back)
+                ret_dict[ticker] = df
+            except Exception as e:
+                print(f"Error getting dates {start_date_str}:{end_date_str} lookback {look_back} for ticker={ticker}")
+        return ret_dict
 
 
 # two_d_array = StockData.group_by_char(si.tickers_nasdaq())

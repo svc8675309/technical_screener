@@ -1,5 +1,5 @@
 import pandas as pd
-
+from datetime import datetime
 from datetime import date
 from stock.data_gather.statement_utils import StatementUtils
 from stock.util.math_utils import MathUtils
@@ -23,6 +23,15 @@ class BalanceIncome(object):
         self.__cur_date = cur_date
         self.__balance_sheet = StatementUtils.getStatement(ticker, data_dir, cur_date, "b", False)
         self.__income_statement = StatementUtils.getStatement(ticker, data_dir, cur_date, "i", False)
+
+    @staticmethod
+    def apply(stocks: pd.DataFrame):
+        stocks["roe"] = stocks.apply(lambda row: BalanceIncome.apply_row(row), axis=1)
+
+    @staticmethod
+    def apply_row(row: pd.Series) -> float:
+        dr = BalanceIncome(row["ticker"], datetime.strptime(row["date"], "%Y-%m-%d").date()).get_return_on_equity()
+        return dr
 
     def get_return_on_equity(self) -> int:
         """_summary_ examines a trend in netIncome over totalStockholderEquity ( Return on Equity )
@@ -60,7 +69,7 @@ class BalanceIncome(object):
 
                 # 1 is a 45 deg angle or 100%
                 # .2 for 20%
-                if return_on_equity_slope >= .2:
+                if return_on_equity_slope >= 0.2:
                     return 1
                 else:
                     return -1
