@@ -5,6 +5,7 @@ import pandas as pd
 from stock.data_gather.stock_data import StockData
 from stock.util.ta_ai import TaAi
 from stock.data_gather.balance_income import BalanceIncome
+from stock.data_gather.quote import Quote
 
 app = Flask(__name__)
 # FLASK_APP=app.py FLASK_ENV=development flask run --no-debugger
@@ -58,17 +59,18 @@ def index():
         candidates = TaAi().scan(
             candlesticks, candidates, f"{resource_dir}/candlesticks_2021-06-24_18675.csv",
         )
+        if  len(candidates) == 0:
+            raise ValueError(f"No candlestic results returned.")
 
         if len(tickers) > 10:
             # Financials
-            #YhIncomeStatement.apply(candidates)
             BalanceIncome.apply(candidates)
             candidates["finance"] = pd.to_numeric(
                 candidates["correctness"]
-            ) + pd.to_numeric(candidates["balance_s"])
+            ) + pd.to_numeric(candidates["roe"])
             candidates = candidates.sort_values(["finance"], ascending=[False])
             candidates = candidates.loc[candidates["condition"] == "bullish"].copy()
-            BalanceIncome.apply(candidates)
+            Quote.apply(candidates)
             candidates = candidates.loc[candidates["pe"] == 1]
 
         # pd.set_option("display.max_rows", None, "display.max_columns", None)

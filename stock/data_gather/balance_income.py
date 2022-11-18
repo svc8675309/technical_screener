@@ -30,7 +30,17 @@ class BalanceIncome(object):
 
     @staticmethod
     def apply_row(row: pd.Series) -> float:
-        dr = BalanceIncome(row["ticker"], datetime.strptime(row["date"], "%Y-%m-%d").date()).get_return_on_equity()
+        dr = 0
+        ticker_val = row["ticker"]
+        date_val = row["date"]
+ 
+        try:
+            dt = datetime.strptime(date_val, "%Y-%m-%d").date()
+            bi = BalanceIncome(ticker_val, dt);
+            dr = bi.get_return_on_equity()
+        except Exception as e:
+            dr = 0
+            print(f"BalanceIncome unable to parse {ticker_val} {date_val}")
         return dr
 
     def get_return_on_equity(self) -> int:
