@@ -37,7 +37,7 @@ class Quote(object):
             dr = q.get_price_per_earnings()
         except Exception as e:
             dr = 0
-            print(f"Quote unable to parse {ticker_val} {date_val}")
+            print(f"Quote unable to parse {ticker_val} {date_val}  error = {e}")
         return dr
  
     def get_price_per_earnings(self) -> int:

@@ -62,6 +62,7 @@ def index():
         if  len(candidates) == 0:
             raise ValueError(f"No candlestic results returned.")
 
+        candidates = candidates.loc[candidates["condition"] == "bullish"].copy()
         if len(tickers) > 10:
             # Financials
             BalanceIncome.apply(candidates)
@@ -69,7 +70,6 @@ def index():
                 candidates["correctness"]
             ) + pd.to_numeric(candidates["roe"])
             candidates = candidates.sort_values(["finance"], ascending=[False])
-            candidates = candidates.loc[candidates["condition"] == "bullish"].copy()
             Quote.apply(candidates)
             candidates = candidates.loc[candidates["pe"] == 1]
 

@@ -51,21 +51,21 @@
         {% for index in stocks %}
         <!--  Date,Candlestick,Condition,Ticker,Correctness,Description -->
         <tr>
-            <td width="7%" class="{{stocks[index]['Condition']}}">{{ stocks[index]['Condition']}}</td>
-            <td width="6%">{{ stocks[index]['Ticker'] }}</td>
-            <td width="25%">{{ stocks[index]['Name'] }}</td>
-            <td width="30%">{{ stocks[index]['Sector'] }}</td>
+            <td width="7%" class="{{stocks[index]['condition']}}">{{ stocks[index]['condition']}}</td>
+            <td width="6%">{{ stocks[index]['ticker'] }}</td>
+            <td width="25%">{{ stocks[index]['name'] }}</td>
+            <td width="30%">{{ stocks[index]['sector'] }}</td>
         </tr>
         <tr>
-            <td width="4%">{{ stocks[index]['Correctness'] }}</td>
-            <td width="4%">{{ stocks[index]['Slope'] }}</td>
-            <td width="4%">{{ stocks[index]['Window'] }}</td>
-            <td width="25%">{{ stocks[index]['Candlestick'] }}</td>
-            <td width="30%">{{ stocks[index]['Description'] }}</td>
+            <td width="4%">{{ stocks[index]['correctness'] }}</td>
+            <td width="4%">{{ stocks[index]['slope'] }}</td>
+            <td width="4%">{{ stocks[index]['window'] }}</td>
+            <td width="25%">{{ stocks[index]['candlestick'] }}</td>
+            <td width="30%">{{ stocks[index]['description'] }}</td>
         </tr>
         <tr>
             <td>
-                <img src="https://charts2.finviz.com/chart.ashx?t={{stocks[index]['Ticker']}}&ty=c&ta=1&p=d&s=l">
+                <img src="https://charts2.finviz.com/chart.ashx?t={{stocks[index]['ticker']}}&ty=c&ta=1&p=d&s=l">
             </td>
         </tr>
         {% endfor %}

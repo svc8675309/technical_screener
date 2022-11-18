@@ -40,7 +40,7 @@ class BalanceIncome(object):
             dr = bi.get_return_on_equity()
         except Exception as e:
             dr = 0
-            print(f"BalanceIncome unable to parse {ticker_val} {date_val}")
+            print(f"BalanceIncome unable to parse {ticker_val} {date_val} error = {e}")
         return dr
 
     def get_return_on_equity(self) -> int:
