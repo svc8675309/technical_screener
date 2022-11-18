@@ -3,6 +3,7 @@ from datetime import datetime
 from datetime import date
 from stock.data_gather.statement_utils import StatementUtils
 from stock.util.math_utils import MathUtils
+from typing import List
 
 
 class BalanceIncome(object):
@@ -25,6 +26,15 @@ class BalanceIncome(object):
         self.__income_statement = StatementUtils.getStatement(ticker, data_dir, cur_date, "i", False)
 
     @staticmethod
+    def get_data(tickers: List[str]):
+        date_val = date.today()
+        for ticker in tickers:
+            try:
+                BalanceIncome(ticker, date_val)
+            except Exception as e:
+                print(f"BalanceIncome({ticker},{date_val}) failed. Error: {e}")    
+
+    @staticmethod
     def apply(stocks: pd.DataFrame):
         stocks["roe"] = stocks.apply(lambda row: BalanceIncome.apply_row(row), axis=1)
 
@@ -33,10 +43,10 @@ class BalanceIncome(object):
         dr = 0
         ticker_val = row["ticker"]
         date_val = row["date"]
- 
+
         try:
             dt = datetime.strptime(date_val, "%Y-%m-%d").date()
-            bi = BalanceIncome(ticker_val, dt);
+            bi = BalanceIncome(ticker_val, dt)
             dr = bi.get_return_on_equity()
         except Exception as e:
             dr = 0
@@ -80,7 +90,7 @@ class BalanceIncome(object):
                 # 1 is a 45 deg angle or 100%
                 # .2 for 20%
                 if return_on_equity_slope >= 0.2:
-                    return 1
+                    return 2
                 else:
                     return -1
 
