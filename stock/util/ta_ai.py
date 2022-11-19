@@ -32,6 +32,7 @@ class TaAi(object):
                 "window",
                 "name",
                 "description",
+                "close"
             )
         )
         count = 0
@@ -82,8 +83,11 @@ class TaAi(object):
                         window = str(cs_analysis_filtered.iloc[0]["window"]) + "d"
 
                         dstr = hit.index[0]
+                        close = 0
                         if str(dstr).isnumeric():
                             dstr = stock_data.tail(1)["date"].values[0]
+                            close = stock_data.tail(1)["close"].values[0]
+                         
                         results.loc[len(results)] = [
                             dstr,
                             candlestick,
@@ -94,6 +98,7 @@ class TaAi(object):
                             window,
                             ticker,
                             desc,
+                            close
                         ]
         results = results.sort_values("correctness", ascending=False)
         results = results.reset_index(drop=True)

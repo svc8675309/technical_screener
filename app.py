@@ -43,7 +43,7 @@ def index():
                 tickers.append(item)
 
         # ( 2 - create new data frames constrained by date )
-        candidates: dict = StockData.get_stocks_by_dates(
+        stocks: dict = StockData.get_stocks_by_dates(
             tickers, 5, end_date
         )
 
@@ -56,31 +56,34 @@ def index():
         candlesticks = candlesticks.items()        
 
         # Scan for technical indicators
-        candidates = TaAi().scan(
-            candlesticks, candidates, f"{resource_dir}/candlesticks_2021-06-24_18675.csv",
+        cans_df: pd.DataFrame = TaAi().scan(
+            candlesticks, stocks, f"{resource_dir}/candlesticks_2021-06-24_18675.csv",
         )
-        if  len(candidates) == 0:
-            raise ValueError(f"No candlestic results returned.")
 
-        candidates = candidates.loc[candidates["condition"] == "bullish"].copy()
+        print(cans_df)
+        cans_df = cans_df.loc[cans_df["condition"] == "bullish"].copy()
+        cans_df = cans_df.loc[cans_df["close"] > 2 ]
+        cans_df = cans_df.sort_values(["correctness"], ascending=[False])
+        cans_df = cans_df.head(100)
+        
         if len(tickers) > 10:
             # Financials
-            BalanceIncome.apply(candidates)
-            candidates["finance"] = pd.to_numeric(
-                candidates["correctness"]
-            ) + pd.to_numeric(candidates["roe"])
-            candidates = candidates.sort_values(["finance"], ascending=[False])
-            Quote.apply(candidates)
-            candidates = candidates.loc[candidates["pe"] == 1]
+            BalanceIncome.apply(cans_df)
+            cans_df["finance"] = pd.to_numeric(
+                cans_df["correctness"]
+            ) + pd.to_numeric(cans_df["roe"])
+            cans_df = cans_df.sort_values(["finance"], ascending=[False])
+            Quote.apply(cans_df)
+            cans_df = cans_df.loc[cans_df["pe"] == 1]
 
         # pd.set_option("display.max_rows", None, "display.max_columns", None)
         pd.set_option("display.max_rows", None)
-        print(candidates, file=sys.stdout)
+        print(cans_df, file=sys.stdout)
 
-        #candidates = candidates.head(20)
+        cans_df = cans_df.head(20)
         return render_template(
             "index.html",
-            stocks=candidates.to_dict(orient="index"),
+            stocks=cans_df.to_dict(orient="index"),
             date_var=date_var,
             stock_picks=stock_picks,
             ignore_update=obj_chk,

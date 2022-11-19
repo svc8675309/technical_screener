@@ -32,11 +32,11 @@ def main(argv):
         for tickers in two_d_array:
             print(count)
             StockData.get_data(tickers)
-            BalanceIncome.get_data(tickers)
+#            BalanceIncome.get_data(tickers)
             count = count + 1
     else:
         StockData.get_data(two_d_array[AlphaNum])
-        BalanceIncome.get_data(two_d_array[AlphaNum])
+#        BalanceIncome.get_data(two_d_array[AlphaNum])
     print(f"AlphaNum-{AlphaNum} : complete")    
 
 if __name__ == "__main__":

@@ -69,6 +69,11 @@ class StatementUtils(object):
             df.to_csv(file)
             df = pd.read_csv(file)
         else:
+            with open(file) as f:
+                lines = f.read().splitlines()
+                if len(lines) <= 2:
+                    raise ValueError(f"File {file} is not valid... ")
+            
             # load the file
             df = pd.read_csv(file)
             # corner case... where the statement needs to be updated
