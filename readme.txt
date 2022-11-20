@@ -34,3 +34,6 @@ https://medium.com/automation-generation/algorithmically-detecting-and-trading-t
 
 Just indicators = 13.8% / 237d
 Balance Sheet   = 16.2% / 244d
+
+
+pip freeze > requirements.txt
