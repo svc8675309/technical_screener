@@ -41,52 +41,59 @@ class StockData(object):
                 df: pd.DataFrame = pd.read_csv(f"{data_dir}/{ticker}.csv")
                 if len(df) > 0:
                     wd = end_date.weekday()
-                    # If it's not sunday or monday
-                    if wd != 6 and wd != 0:
-                        # get the date of the last row
-                        latest_in_df = df.iloc[-1][0]
-                        # increase the last recorded day by 1 day
-                        latest_date = datetime.strptime(latest_in_df, "%Y-%m-%d") + timedelta(days=1)
-                        if latest_date.date() < end_date:
-                            try:
-                                adjusted = si.get_data(ticker, start_date=latest_date.date(), end_date=end_date)
-                            except Exception as ex:
-                                print(f"Yahoo_fin :Error downloading : {ticker} : {str(ex)}")
-                                continue
+                    # Need to account for saturday and sunday
+                    weekend = 0
+                    if wd == 5:
+                        weekend = 1
+                    elif wd == 6:
+                        weekend = 2
 
-                            if len(adjusted) > 0:
-                                temp: pd.DataFrame = pd.DataFrame(
-                                    columns=(
-                                        "date",
-                                        "open",
-                                        "high",
-                                        "low",
-                                        "close",
-                                        "adjclose",
-                                        "volume",
-                                    )
+                    # get the date of the last row
+                    latest_in_df = df.iloc[-1][0]
+                    # increase the last recorded day by 1 day
+                    latest_date = datetime.strptime(latest_in_df, "%Y-%m-%d")
+
+                    # if the last date was friday and today is sat then firday !< sat - 1
+                    if latest_date.date() < (end_date - timedelta(days=weekend)):
+                        try:
+                            # We must add 1 day to the last_date for the query so not to include the last_date
+                            adjusted = si.get_data(ticker, start_date=latest_date.date() + timedelta(days=1))
+                        except Exception as ex:
+                            print(f"Yahoo_fin :Error downloading : {ticker} : {str(ex)}")
+                            continue
+                        if len(adjusted) > 0:
+                            temp: pd.DataFrame = pd.DataFrame(
+                                columns=(
+                                    "date",
+                                    "open",
+                                    "high",
+                                    "low",
+                                    "close",
+                                    "adjclose",
+                                    "volume",
                                 )
-                                for index, row in adjusted.iterrows():
-                                    r_date = index.strftime("%Y-%m-%d")
-                                    r_list = row.to_list()
-                                    temp.loc[temp.shape[0]] = [
-                                        r_date,
-                                        r_list[0],
-                                        r_list[1],
-                                        r_list[2],
-                                        r_list[3],
-                                        r_list[4],
-                                        r_list[5],
-                                    ]
-                                temp = temp.drop_duplicates(subset=["date"], keep="last")
-                                # append to the existing file
-                                with open(f"{data_dir}/{ticker}.csv", "a") as f:
-                                    temp.to_csv(f, header=False, index=False)
+                            )
+                            for index, row in adjusted.iterrows():
+                                r_date = index.strftime("%Y-%m-%d")
+                                r_list = row.to_list()
+                                temp.loc[temp.shape[0]] = [
+                                    r_date,
+                                    r_list[0],
+                                    r_list[1],
+                                    r_list[2],
+                                    r_list[3],
+                                    r_list[4],
+                                    r_list[5],
+                                ]
+                            temp = temp.drop_duplicates(subset=["date"], keep="last")
+                            # append to the existing file
+                            with open(f"{data_dir}/{ticker}.csv", "a") as f:
+                                temp.to_csv(f, header=False, index=False)
 
-                                # reload ( this solves the index problem )
-                                df: pd.DataFrame = pd.read_csv(f"{data_dir}/{ticker}.csv")
-                                print(f"Updated {ticker}\n")
-                    ret_dict[ticker] = df
+                            # reload ( this solves the index problem )
+                            df: pd.DataFrame = pd.read_csv(f"{data_dir}/{ticker}.csv")
+                            print(f"Updated {ticker}\n")
+                ret_dict[ticker] = df
         return ret_dict
 
     @staticmethod

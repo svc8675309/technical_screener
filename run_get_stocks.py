@@ -37,6 +37,7 @@ def main(argv):
     else:
         StockData.get_data(two_d_array[AlphaNum])
 #        BalanceIncome.get_data(two_d_array[AlphaNum])
+
     print(f"AlphaNum-{AlphaNum} : complete")    
 
 if __name__ == "__main__":
